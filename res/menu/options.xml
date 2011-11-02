@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+	<item android:id="@+id/decks" android:title="Decks"></item>
+	<item android:id="@+id/view" android:title="View">
+		<menu>
+			<group android:checkableBehavior="single">
+				<item android:title="Hanzi" android:id="@+id/view_hanzi" android:checked="true"></item>
+				<item android:title="Pinyin" android:id="@+id/view_pinyin"></item>
+				<item android:title="English" android:id="@+id/view_english"></item>
+			</group>
+		</menu>
+	</item>
+</menu>
