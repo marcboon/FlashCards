@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import com.eekboom.utils.Strings;
+
 import android.app.ListActivity;
 import android.os.Bundle;
 import android.os.Environment;
@@ -158,14 +160,14 @@ public class FileBrowserActivity extends ListActivity implements OnItemLongClick
 	
 	protected void cancel() {
 		// Return with result code CANCELED
-		setResult(RESULT_CANCELED, getIntent());
+		setResult(RESULT_CANCELED, null);
 		finish();
 	}
 	
 	protected void loadList(File dir) {
 		// Get directory contents in natural sort order
 		List<String> list = Arrays.asList(dir.list());
-		Collections.sort(list);
+		Collections.sort(list, Strings.getNaturalComparatorIgnoreCaseAscii());
 		
 		// Load list with directory contents
 		setTitle(folder.substring(root.lastIndexOf(SEPARATOR) + 1));

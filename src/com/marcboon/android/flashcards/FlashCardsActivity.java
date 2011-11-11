@@ -1,5 +1,6 @@
 package com.marcboon.android.flashcards;
 
+import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.File;
@@ -7,6 +8,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.util.Random;
 import java.util.Vector;
@@ -68,9 +70,10 @@ public class FlashCardsActivity extends Activity {
 		firstView = prefs.getInt(VIEW, HANZI);
 		decks = new Bundle();
 		for(String deck : prefs.getAll().keySet()) {
-			decks.putBoolean(deck, true);
+			if(!deck.startsWith(".")) {
+				decks.putBoolean(deck, true);
+			}
 		}
-		decks.remove(VIEW);
 		loadStack();
 	}
 
@@ -164,7 +167,7 @@ public class FlashCardsActivity extends Activity {
 		return true;
 	}
 
-	/** Called when activity called with startActivityForResult() returns */
+	/** Called when the activity called with startActivityForResult() returns */
 	@Override
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
@@ -300,15 +303,19 @@ public class FlashCardsActivity extends Activity {
 	protected void loadStack() {
 		// Empty card stack
 		stack.clear();
+		Bundle loaded = new Bundle();
 
 		// Load selected decks
-		Toast.makeText(this, "decks: " + decks.size(), Toast.LENGTH_SHORT).show();
 		for (String deck : decks.keySet()) try {
-			loadFile(new File(deck));
+			if(loadFile(new File(deck))) {
+				loaded.putBoolean(deck, decks.getBoolean(deck));
+			}
 		}
 		catch (IOException e) {
 			Toast.makeText(this, e.toString(), Toast.LENGTH_LONG).show();
 		}
+		decks = loaded;
+		Toast.makeText(this, "Decks: " + decks.size(), Toast.LENGTH_SHORT).show();
 
 		// Load default card if stack is empty
 		if(stack.size() == 0) {
@@ -319,16 +326,16 @@ public class FlashCardsActivity extends Activity {
 		showCard();
 	}
 
-	protected void loadFile(File file) throws IOException {
+	protected boolean loadFile(File file) throws IOException {
 		if(file.canRead()) {
 			if(file.isFile()) {
 				// Open stream
 				InputStream is = new FileInputStream(file);
 				if (file.getName().endsWith(TXT)) {
-					loadFromInputStream(is);
+					return loadFromInputStream(is);
 				}
 				else if (file.getName().endsWith(UTF)) {
-					loadUTF(new DataInputStream(is));
+					return loadUTF(new DataInputStream(is));
 				}
 			}
 /*
@@ -343,9 +350,10 @@ public class FlashCardsActivity extends Activity {
 		else {
 			Toast.makeText(this, "Can't read " + file.getAbsolutePath(), Toast.LENGTH_LONG).show();
 		}
+		return false;
 	}
 
-	protected void loadUTF(DataInputStream is) throws IOException {
+	protected boolean loadUTF(DataInputStream is) throws IOException {
 		try {
 			while (true) {
 				String line = is.readUTF();
@@ -356,12 +364,13 @@ public class FlashCardsActivity extends Activity {
 		} finally {
 			is.close();
 		}
+		return true;
 	}
 
-	protected void loadFromInputStream(InputStream is) throws IOException {
-		InputStreamReader reader;
+	protected boolean loadFromInputStream(InputStream is) throws IOException {
+		Reader reader;
 		try {
-			reader = new InputStreamReader(is, "UTF-8");
+			reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
 		} catch (UnsupportedEncodingException e) {
 			throw new IOException();
 		}
@@ -372,9 +381,10 @@ public class FlashCardsActivity extends Activity {
             stack.add(new Card(line));
 		}
 		reader.close();
+		return true;
 	}
 
-	protected String readLine(InputStreamReader reader) throws IOException {
+	protected String readLine(Reader reader) throws IOException {
 		// Test whether the end of file has been reached. If so, return null.
 		int readChar = reader.read();
 		if (readChar == -1) {
